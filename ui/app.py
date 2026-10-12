@@ -514,6 +514,7 @@ class MainWindow(QMainWindow):
         self._shortcut("Ctrl+Z", self.undo)
         self._shortcut("Ctrl+G", self.on_generate)
         self._shortcut("F", self.canvas.fit)
+        self._shortcut("Ctrl+R", self.request_compute)
 
         self.set_mode("manual")
         self.refresh_stats()
@@ -644,6 +645,15 @@ class MainWindow(QMainWindow):
 
         # --- результат ---
         rc, rl = card("Результат")
+        self.run_btn = QPushButton("▶  Запустити алгоритм")
+        self.run_btn.setObjectName("primary")
+        self.run_btn.setToolTip("Ctrl+R — обчислити найближчих сусідів для поточного набору")
+        self.run_btn.clicked.connect(self.request_compute)
+        rl.addWidget(self.run_btn)
+        self.auto_cb = QCheckBox("Перераховувати автоматично")
+        self.auto_cb.setChecked(True)
+        self.auto_cb.setToolTip("Запускати алгоритм після кожної зміни точок")
+        rl.addWidget(self.auto_cb)
         self.stats = QGridLayout()
         self.stats.setVerticalSpacing(5)
         self.stat_labels = {}
@@ -731,7 +741,11 @@ class MainWindow(QMainWindow):
         self.verify_label.setText("")
         self.update_counter()
         self.refresh_stats()
-        self.request_compute()
+        if self.auto_cb.isChecked():
+            self.request_compute()
+        else:
+            self.token += 1                     # скасувати незавершене обчислення
+            self.state_label.setText("натисніть «Запустити алгоритм»" if pts else "")
 
     def on_point_added(self, p: Point) -> None:
         if self.mode != "manual":
